@@ -1,11 +1,198 @@
-#include <iostream>
+// GLAD - loads OpenGL function pointers at runtime
 #include <glad/glad.h>
+// GLFW - API for creating windows, contexts and surfaces, receiving input and events
 #include <GLFW/glfw3.h>
 
-// 1. Define the callback function OUTSIDE of main
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+// Standard input/output operations
+#include <iostream>
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void processInput(GLFWwindow* window);
+
+// window width
+constexpr unsigned int SCR_WIDTH = 800;
+// window height
+constexpr unsigned int SCR_HEIGHT = 600;
+
+
+// Vertex shader required for rendering graphics
+// Done at every vertex
+// Vec4 used for the vec.w - perspective division
+auto vertexShaderSource = "#version 330 core\n"
+    "layout (location = 0) in vec3 aPos;\n"
+    "void main()\n"
+    "{\n"
+    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+    "}\0";
+
+// Fragment shader required for rendering graphics
+// Done at every pixel
+auto fragmentShaderSource = "#version 330 core\n"
+    "out vec4 FragColor;\n"
+    "void main()\n"
+    "{\n"
+    "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+    "}\n\0";
+
+int main()
 {
-    glViewport(0, 0, width, height);
+    // Initializes the GLFW library
+    glfwInit();
+
+    // Required for MacOS M chip support
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+
+    // Creates a window and its associated context
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+
+    // window null check
+    if (window == NULL)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        // Terminates the GLFW library
+        glfwTerminate();
+        // Return -1, to signify unsuccessful operation / error signaling
+        return -1;
+    }
+
+    // Makes the context of the specified window current for the calling thread
+    glfwMakeContextCurrent(window);
+    // Sets the framebuffer resize callback for the specified window
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    // Check if GLAD GL is loaded and the GLFW specific function is found in the graphics driver
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
+    }
+
+    // creates an empty shader object and returns a non-zero value by which it can be referenced
+    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    // replaces the source code in a shader object
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    // compiles the source code strings that have been stored in the shader object specified by shader
+    glCompileShader(vertexShader);
+
+    int success;
+    // character array to hold a shader error message
+    char infoLog[512];
+
+    // return the requested parameter from a shader object
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+
+    // checking if GL compile for the shader is successful
+    if (!success)
+    {
+        // returns the information log for a shader object
+        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+
+    // creates shader object, in this case a fragment shader
+    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    glCompileShader(fragmentShader);
+
+    // same checks for the fragment shader as the vertex shader
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+
+    // creates an empty program object and returns a non-zero value by which it can be referenced
+    unsigned int shaderProgram = glCreateProgram();
+    // shaders that will be linked together must first be attached to a program
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    // linking the shaders to the program
+    glLinkProgram(shaderProgram);
+
+    // check if program was successfully linked
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+    }
+
+    // once the shaders are linked, the memory can be freed, as they are no longer needed
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    // Array of vec, in this case a triangle
+    float vertices[] = {
+        -0.5f, -0.5f, 0.0f, // left
+        0.5f, -0.5f, 0.0f, // right
+        0.0f, 0.5f, 0.0f // top
+    };
+
+    // Vertex Buffer Object & Vertex Array Object
+    unsigned int VBO, VAO;
+    // generate vertex array
+    glGenVertexArrays(1, &VAO);
+    // generate vertex buffer
+    glGenBuffers(1, &VBO);
+
+    // binds the vertex array
+    glBindVertexArray(VAO);
+
+    // binds the vertex buffer
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    // static draw - this shape never changes it's vertex values
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // define an array of generic vertex attribute data
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    // enable or disable a generic vertex attribute array
+    glEnableVertexAttribArray(0);
+
+    // unbinds vbo (buffer: 0)
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // unbinds vao (array: 0)
+    glBindVertexArray(0);
+
+    // polygon mode:
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    // keep window open while the close is false
+    while (!glfwWindowShouldClose(window))
+    {
+        // custom function to listen for user input to close window
+        processInput(window);
+
+        // clears the window’s background to a specific color
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // activates the specified shader program
+        glUseProgram(shaderProgram);
+        // binds vbo
+        glBindVertexArray(VAO);
+        // draw call to draw (count: 3) vertices using the bound vao
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        // "double buffering"
+        glfwSwapBuffers(window);
+        // process window events (eg. close window with esc)
+        glfwPollEvents();
+    }
+
+    // delete vao, vbo, and program
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteProgram(shaderProgram);
+
+    // terminate GLFW
+    glfwTerminate();
+    return 0;
 }
 
 void processInput(GLFWwindow* window)
@@ -14,40 +201,7 @@ void processInput(GLFWwindow* window)
         glfwSetWindowShouldClose(window, true);
 }
 
-int main()
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-    glfwInit();
-    // ... (Your window hint code) ...
-
-    GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
-    if (window == NULL)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
-
-    glViewport(0, 0, 800, 600);
-
-    // 2. Register the callback inside main
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
-    while (!glfwWindowShouldClose(window))
-    {
-        processInput(window);
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
-
-    glfwTerminate();
-    return 0;
+    glViewport(0, 0, width, height);
 }
