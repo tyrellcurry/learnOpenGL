@@ -128,9 +128,12 @@ int main()
 
     // Array of vec, in this case a triangle
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f, // left
-        0.5f, -0.5f, 0.0f, // right
-        0.0f, 0.5f, 0.0f // top
+        0.0f, 0.0f, 0.0f, // left
+        0.5f, 0.0f, 0.0f, // right
+        0.25f, 0.5f, 0.0f, // top
+        0.0f, 0.0f, 0.0f, // left
+        -0.5f, 0.0f, 0.0f, // right
+        -0.25f, 0.5f, 0.0f // top
     };
 
     // Vertex Buffer Object & Vertex Array Object
@@ -178,6 +181,7 @@ int main()
         glBindVertexArray(VAO);
         // draw call to draw (count: 3) vertices using the bound vao
         glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_TRIANGLES, 3, 3);
 
         // "double buffering"
         glfwSwapBuffers(window);
