@@ -127,40 +127,58 @@ int main()
     glDeleteShader(fragmentShader);
 
     // Array of vec, in this case a triangle
-    float vertices[] = {
+    float vertices_1[] = {
         0.0f, 0.0f, 0.0f, // left
         0.5f, 0.0f, 0.0f, // right
         0.25f, 0.5f, 0.0f, // top
+    };
+
+    float vertices_2[] = {
         0.0f, 0.0f, 0.0f, // left
         -0.5f, 0.0f, 0.0f, // right
         -0.25f, 0.5f, 0.0f // top
     };
 
     // Vertex Buffer Object & Vertex Array Object
-    unsigned int VBO, VAO;
+    unsigned int VBO_1, VAO_1, VBO_2, VAO_2;
+    // if we wanted, we could declare multiple VBO/VAO like: unsigned int VBOs[2], VAOs[2];
     // generate vertex array
-    glGenVertexArrays(1, &VAO);
+    glGenVertexArrays(1, &VAO_1);
+    glGenVertexArrays(1, &VAO_2);
+    // if we declared VAOs are arr, we could generate both at same time: glGenVertexArrays(2, VAOs);
     // generate vertex buffer
-    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &VBO_1);
+    glGenBuffers(1, &VBO_2);
+    // same here: glGenBuffers(2, VBOs);
 
-    // binds the vertex array
-    glBindVertexArray(VAO);
+    // binds the first VAO
+    glBindVertexArray(VAO_1);
 
-    // binds the vertex buffer
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    // binds the first VBO
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_1);
     // static draw - this shape never changes it's vertex values
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_1), vertices_1, GL_STATIC_DRAW);
 
     // define an array of generic vertex attribute data
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     // enable or disable a generic vertex attribute array
     glEnableVertexAttribArray(0);
 
-    // unbinds vbo (buffer: 0)
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    // Every VAO needs its own configuration calls to know how to interpret the buffer data
+    // Repeating below for the second set of VAO/VBO
 
-    // unbinds vao (array: 0)
-    glBindVertexArray(0);
+    // binds the second VAO
+    glBindVertexArray(VAO_2);
+
+    // binds the second VBO
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_2);
+    // static draw - this shape never changes it's vertex values
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_2), vertices_2, GL_STATIC_DRAW);
+
+    // define an array of generic vertex attribute data
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    // enable or disable a generic vertex attribute array
+    glEnableVertexAttribArray(0);
 
     // polygon mode:
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -177,11 +195,15 @@ int main()
 
         // activates the specified shader program
         glUseProgram(shaderProgram);
-        // binds vbo
-        glBindVertexArray(VAO);
+        // binds first VAO
+        glBindVertexArray(VAO_1);
         // draw call to draw (count: 3) vertices using the bound vao
         glDrawArrays(GL_TRIANGLES, 0, 3);
-        glDrawArrays(GL_TRIANGLES, 3, 3);
+
+        // binds second VAO
+        glBindVertexArray(VAO_2);
+        // draw call to draw (count: 3) vertices using the bound vao
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // "double buffering"
         glfwSwapBuffers(window);
@@ -190,8 +212,10 @@ int main()
     }
 
     // delete vao, vbo, and program
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
+    glDeleteVertexArrays(1, &VAO_1);
+    glDeleteBuffers(1, &VBO_1);
+    glDeleteVertexArrays(1, &VAO_2);
+    glDeleteBuffers(1, &VBO_2);
     glDeleteProgram(shaderProgram);
 
     // terminate GLFW
