@@ -34,6 +34,13 @@ auto fragmentShaderSource = "#version 330 core\n"
     "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
     "}\n\0";
 
+auto fragmentShaderSource_2 = "#version 330 core\n"
+    "out vec4 FragColor;\n"
+    "void main()\n"
+    "{\n"
+    "   FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n"
+    "}\n\0";
+
 int main()
 {
     // Initializes the GLFW library
@@ -95,8 +102,11 @@ int main()
 
     // creates shader object, in this case a fragment shader
     unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    unsigned int fragmentShader_2 = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    glShaderSource(fragmentShader_2, 1, &fragmentShaderSource_2, NULL);
     glCompileShader(fragmentShader);
+    glCompileShader(fragmentShader_2);
 
     // same checks for the fragment shader as the vertex shader
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
@@ -108,11 +118,15 @@ int main()
 
     // creates an empty program object and returns a non-zero value by which it can be referenced
     unsigned int shaderProgram = glCreateProgram();
+    unsigned int shaderProgram_2 = glCreateProgram();
     // shaders that will be linked together must first be attached to a program
     glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram_2, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
+    glAttachShader(shaderProgram_2, fragmentShader_2);
     // linking the shaders to the program
     glLinkProgram(shaderProgram);
+    glLinkProgram(shaderProgram_2);
 
     // check if program was successfully linked
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
@@ -200,6 +214,7 @@ int main()
         // draw call to draw (count: 3) vertices using the bound vao
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
+        glUseProgram(shaderProgram_2);
         // binds second VAO
         glBindVertexArray(VAO_2);
         // draw call to draw (count: 3) vertices using the bound vao
