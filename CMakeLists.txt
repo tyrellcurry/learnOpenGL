@@ -16,17 +16,24 @@ include_directories(extern/include)
 add_executable(learnOpenGL
         main.cpp
         extern/src/glad.c
+        shader/shader.h
+)
+
+add_custom_command(
+        TARGET learnOpenGL POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/shader $<TARGET_FILE_DIR:learnOpenGL>/shader
 )
 
 # 5. Link libraries
 target_link_libraries(learnOpenGL PRIVATE glfw)
 
 # 6. Mac-specific: Link required system frameworks
-if(APPLE)
+if (APPLE)
     target_link_libraries(learnOpenGL PRIVATE
             "-framework OpenGL"
             "-framework Cocoa"
             "-framework IOKit"
             "-framework CoreVideo"
     )
-endif()
+endif ()
