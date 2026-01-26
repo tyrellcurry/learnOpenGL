@@ -8,27 +8,35 @@ set(CMAKE_CXX_STANDARD 17)
 list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew")
 find_package(glfw3 REQUIRED)
 
-# 3. Tell CMake where to look for your include folders (GLAD and KHR)
-include_directories(extern/include)
+# 3. Add GLAD as a separate library
+add_library(glad STATIC
+        extern/src/glad.c
+)
+target_include_directories(glad PUBLIC extern/include)
 
 # 4. Define the executable
-# Note: Removed the duplicate main.cpp
 add_executable(learnOpenGL
         main.cpp
-        extern/src/glad.c
         shader/shader.h
 )
 
+# 5. Include directories for your main executable
+target_include_directories(learnOpenGL PRIVATE extern/include)
+
+# 6. Copy shader files post-build
 add_custom_command(
         TARGET learnOpenGL POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/shader $<TARGET_FILE_DIR:learnOpenGL>/shader
 )
 
-# 5. Link libraries
-target_link_libraries(learnOpenGL PRIVATE glfw)
+# 7. Link libraries
+target_link_libraries(learnOpenGL PRIVATE
+        glad
+        glfw
+)
 
-# 6. Mac-specific: Link required system frameworks
+# 8. Mac-specific: Link required system frameworks
 if (APPLE)
     target_link_libraries(learnOpenGL PRIVATE
             "-framework OpenGL"
@@ -36,4 +44,4 @@ if (APPLE)
             "-framework IOKit"
             "-framework CoreVideo"
     )
-endif ()
+endif()

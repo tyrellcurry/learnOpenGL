@@ -1,12 +1,11 @@
 #ifndef SHADER_H
 #define SHADER_H
-
 #include <glad/glad.h>
-
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <algorithm>  
 
 class Shader
 {
@@ -39,6 +38,10 @@ public:
             // convert stream into string
             vertexCode = vShaderStream.str();
             fragmentCode = fShaderStream.str();
+            
+            // REMOVE CARRIAGE RETURNS (Windows line endings)
+            vertexCode.erase(std::remove(vertexCode.begin(), vertexCode.end(), '\r'), vertexCode.end());
+            fragmentCode.erase(std::remove(fragmentCode.begin(), fragmentCode.end(), '\r'), fragmentCode.end());
         }
         catch (std::ifstream::failure& e)
         {
@@ -68,33 +71,28 @@ public:
         glDeleteShader(vertex);
         glDeleteShader(fragment);
     }
-
     // activate the shader
     // ------------------------------------------------------------------------
     void use() const
     {
         glUseProgram(ID);
     }
-
     // utility uniform functions
     // ------------------------------------------------------------------------
     void setBool(const std::string& name, bool value) const
     {
         glUniform1i(glGetUniformLocation(ID, name.c_str()), static_cast<int>(value));
     }
-
     // ------------------------------------------------------------------------
     void setInt(const std::string& name, int value) const
     {
         glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
     }
-
     // ------------------------------------------------------------------------
     void setFloat(const std::string& name, float value) const
     {
         glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
     }
-
 private:
     // utility function for checking shader compilation/linking errors.
     // ------------------------------------------------------------------------

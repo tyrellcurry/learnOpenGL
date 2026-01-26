@@ -1,4 +1,4 @@
-// GLAD - loads OpenGL function pointers at runtime
+// GLAD - loads OpenGL function pointers at runtime 
 #include <glad/glad.h>
 // GLFW - API for creating windows, contexts and surfaces, receiving input and events
 #include <GLFW/glfw3.h>
@@ -8,8 +8,8 @@
 // Standard input/output operations
 #include <iostream>
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow* window);
+void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+void processInput(GLFWwindow *window);
 
 // window width
 constexpr unsigned int SCR_WIDTH = 800;
@@ -52,6 +52,10 @@ int main()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+
+	int width, height;
+	glfwGetFramebufferSize(window, &width, &height);
+	glViewport(0, 0, width, height);
 
     Shader ourShader("shader/vertex_shader.glsl", "shader/fragment_shader.glsl");
 
